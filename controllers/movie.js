@@ -5,14 +5,24 @@ exports.searchMovie = async (req, res) => {
     const { keyword } = req.body;
     let regexp = new RegExp(keyword, "i");
 
-    const result = await Movie.find({
+    const limit = req.query.limit;
+    const offset = req.query.offset;
+
+    let query = Movie.find({
       $or: [
         { title: { $regex: regexp } },
         { cast: { $regex: regexp } },
         { genres: { $regex: regexp } },
-        { year: Number.isInteger(keyword)?keyword:0 },
+        { year: isNaN(keyword) ? 0 : keyword },
       ],
-    });
+    })
+    if (limit && offset) {
+      query = query.limit(limit).skip(offset)
+    } else {
+      query = query.limit(10).skip(0)
+    }
+    const result = await query
+
 
     res.status(200).json(result);
   } catch (e) {
